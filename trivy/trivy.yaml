@@ -1,0 +1,23 @@
+severity:
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+exit-code: 0         # Mettre 1 pour bloquer sur CRITICAL
+format: table
+output: reports/trivy-report.json
+
+vulnerability:
+  type:
+    - os
+    - library
+```
+
+---
+
+### `trivy/.trivyignore`
+```
+# CVE à ignorer (faux positifs ou acceptés volontairement)
+# CVE-2023-XXXX
+# CVE-2024-XXXX
