@@ -32,6 +32,7 @@ pipeline {
                     trivy image \
                         --exit-code 0 \
                         --severity LOW,MEDIUM,HIGH,CRITICAL \
+                        --timeout 10m \
                         --format table \
                         ${IMAGE_NAME}:${IMAGE_TAG}
                 """
