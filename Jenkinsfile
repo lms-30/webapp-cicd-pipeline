@@ -31,25 +31,14 @@ pipeline {
                 sh '''
                 mkdir -p reports
                 mkdir -p templates
-
-                cat <<EOF > templates/csv.tpl
-        Target,Type,VulnerabilityID,Severity,PkgName,InstalledVersion,FixedVersion,Title
-        {{- range . }}
-        {{- range .Vulnerabilities }}
-        {{ $.Target }},{{ $.Type }},{{ .VulnerabilityID }},{{ .Severity }},{{ .PkgName }},{{ .InstalledVersion }},{{ .FixedVersion }},"{{ .Title }}"
-        {{- end }}
-        {{- end }}
-        EOF
-
+                
                 trivy image \
                 --scanners vuln \
                 --severity LOW,MEDIUM,HIGH,CRITICAL \
                 --format template \
                 --template "@templates/csv.tpl" \
                 --output reports/trivy-report.csv \
-               python:3.8
-
-                cat reports/trivy-report.csv
+                ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
         }
