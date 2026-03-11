@@ -1,13 +1,12 @@
 pipeline {
     agent any
-
     environment {
-        IMAGE_NAME = "mon-app"
-        IMAGE_TAG  = "build-${BUILD_NUMBER}"
+        IMAGE_NAME    = "mon-app"
+        IMAGE_TAG     = "build-${BUILD_NUMBER}"
+        REPORT_DIR    = "reports"
+        REPORT_FILE   = "trivy-report.csv"
     }
-
     stages {
-
         stage('Checkout') {
             steps {
                 echo "📥 Récupération du code depuis GitHub..."
@@ -15,12 +14,12 @@ pipeline {
             }
         }
 
-        stage('Pull & Build Image Docker') {
+        stage('Build Image Docker Compose') {
             steps {
-                echo "🐳 Build de l'image Docker..."
+                echo "🐳 Build avec Docker Compose..."
                 sh """
-                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                    docker compose build
+                    docker tag ${IMAGE_NAME}:latest ${IMAGE_NAME}:${IMAGE_TAG}
                 """
             }
         }
@@ -29,18 +28,19 @@ pipeline {
             steps {
                 echo "🔍 Scan de sécurité avec Trivy..."
                 sh """
+                    mkdir -p ${REPORT_DIR}
                     trivy image \
                         --exit-code 0 \
                         --severity LOW,MEDIUM,HIGH,CRITICAL \
                         --timeout 10m \
                         --format csv \
-                        --output trivy-report.csv \
+                        --output ${REPORT_DIR}/${REPORT_FILE} \
                         ${IMAGE_NAME}:${IMAGE_TAG}
                 """
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'reports/trivy-report.csv', allowEmptyArchive: true
+                    archiveArtifacts artifacts: "${REPORT_DIR}/${REPORT_FILE}", allowEmptyArchive: true
                 }
             }
         }
@@ -54,7 +54,6 @@ pipeline {
             echo "❌ Pipeline échoué."
         }
         always {
-            // Nettoyage des images locales (optionnel)
             sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
         }
     }
