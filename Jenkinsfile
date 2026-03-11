@@ -33,7 +33,8 @@ pipeline {
                         --exit-code 0 \
                         --severity LOW,MEDIUM,HIGH,CRITICAL \
                         --timeout 10m \
-                        --format csv \
+                        --format template \
+                        --template "@contrib/csv.tpl"
                         --output ${REPORT_DIR}/${REPORT_FILE} \
                         ${IMAGE_NAME}:${IMAGE_TAG}
                 """
