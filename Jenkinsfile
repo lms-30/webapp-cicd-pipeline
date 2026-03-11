@@ -28,15 +28,15 @@ pipeline {
             steps {
                 echo "🔍 Scan de sécurité avec Trivy..."
                 sh """
-                    mkdir -p ${REPORT_DIR}
-                    trivy image \
-                        --exit-code 0 \
-                        --severity LOW,MEDIUM,HIGH,CRITICAL \
-                        --timeout 10m \
-                        --format template \
-                        --template "@contrib/csv.tpl"
-                        --output ${REPORT_DIR}/${REPORT_FILE} \
-                        ${IMAGE_NAME}:${IMAGE_TAG}
+                mkdir -p ${REPORT_DIR}
+                trivy image \
+                --exit-code 0 \
+                --severity LOW,MEDIUM,HIGH,CRITICAL \
+                --timeout 10m \
+                --format template \
+                --template "@contrib/csv.tpl" \
+                --output reports/trivy-report.csv \
+                mon-app:build-${BUILD_NUMBER}
                 """
             }
             post {
