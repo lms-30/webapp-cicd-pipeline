@@ -47,7 +47,7 @@ pipeline {
                 --format template \
                 --template "@templates/csv.tpl" \
                 --output reports/trivy-report.csv \
-                ${IMAGE_NAME}:${IMAGE_TAG}
+               python:3.8
 
                 cat reports/trivy-report.csv
                 '''
