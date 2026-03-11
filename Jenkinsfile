@@ -32,7 +32,14 @@ pipeline {
                 mkdir -p reports
                 mkdir -p templates
 
-                wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/csv.tpl -O templates/csv.tpl
+                cat <<EOF > templates/csv.tpl
+        Target,Type,VulnerabilityID,Severity,PkgName,InstalledVersion,FixedVersion,Title
+        {{- range . }}
+        {{- range .Vulnerabilities }}
+        {{ $.Target }},{{ $.Type }},{{ .VulnerabilityID }},{{ .Severity }},{{ .PkgName }},{{ .InstalledVersion }},{{ .FixedVersion }},"{{ .Title }}"
+        {{- end }}
+        {{- end }}
+        EOF
 
                 trivy image \
                 --scanners vuln \
