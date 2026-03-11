@@ -43,13 +43,13 @@ pipeline {
 
                 trivy image \
                 --scanners vuln \
-                --exit-code 0 \
                 --severity LOW,MEDIUM,HIGH,CRITICAL \
-                --timeout 10m \
                 --format template \
                 --template "@templates/csv.tpl" \
                 --output reports/trivy-report.csv \
                 ${IMAGE_NAME}:${IMAGE_TAG}
+
+                cat reports/trivy-report.csv
                 '''
             }
         }
