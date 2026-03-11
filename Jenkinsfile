@@ -33,21 +33,14 @@ pipeline {
                         --exit-code 0 \
                         --severity LOW,MEDIUM,HIGH,CRITICAL \
                         --timeout 10m \
-                        --format table \
+                        --format csv \
+                        --output trivy-report.csv \
                         ${IMAGE_NAME}:${IMAGE_TAG}
                 """
             }
             post {
                 always {
-                    // Générer un rapport JSON pour archivage
-                    sh """
-                        trivy image \
-                            --exit-code 0 \
-                            --format json \
-                            --output trivy-report.json \
-                            ${IMAGE_NAME}:${IMAGE_TAG}
-                    """
-                    archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'reports/trivy-report.csv', allowEmptyArchive: true
                 }
             }
         }
