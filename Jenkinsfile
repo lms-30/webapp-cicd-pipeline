@@ -38,7 +38,7 @@ pipeline {
                 --format template \
                 --template "@templates/csv.tpl" \
                 --output reports/trivy-report.csv \
-                ${IMAGE_NAME}:${IMAGE_TAG}
+                ${IMAGE_NAME}:latest
                 '''
             }
         }
