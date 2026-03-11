@@ -19,7 +19,7 @@ pipeline {
             steps {
                 echo '🐳 Build avec Docker Compose...'
                 sh '''
-                docker compose build
+                docker compose build --no-cache
                 docker tag ${IMAGE_NAME}:latest ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
