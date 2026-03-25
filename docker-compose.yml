@@ -7,18 +7,15 @@ services:
     container_name: mon-app
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "5000:5000"
     environment:
       - PYTHONUNBUFFERED=1
-      - PORT=8080
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - jenkins_home:/var/jenkins_home
-      - ./trivy-reports:/var/jenkins_home/exports
+      
     networks:
       - app-network
+      
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
