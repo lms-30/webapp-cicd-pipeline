@@ -30,6 +30,7 @@ pipeline {
                 trivy image \
                 --scanners vuln \
                 --severity LOW,MEDIUM,HIGH,CRITICAL \
+                --timeout 15m \
                 --format template \
                 --template "@templates/csv.tpl" \
                 --output reports/trivy-report-raw.csv \
