@@ -7,8 +7,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo '📥 Récupération du code depuis GitHub...'
-                checkout scm
+                echo '📥 Code récupéré automatiquement par Jenkins via SCM.'
             }
         }
         stage('Build Image Docker Compose') {
@@ -45,8 +44,8 @@ pipeline {
                 python3 - <<'EOF'
 import csv
 import sys
+from collections import Counter
 
-# Ordre de priorité décroissant
 SEVERITY_ORDER = {
     "CRITICAL": 1,
     "HIGH":     2,
@@ -61,50 +60,60 @@ output_file = "reports/trivy-report.csv"
 try:
     with open(input_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
-        fieldnames = reader.fieldnames
+        raw_fieldnames = reader.fieldnames
 
-        if not fieldnames:
+        if not raw_fieldnames:
             print("⚠️  Fichier CSV vide ou sans en-tête.")
             sys.exit(0)
 
-        # Détection automatique de la colonne Severity
-        severity_col = next(
-            (col for col in fieldnames if "severity" in col.lower()),
-            None
-        )
+        # Supprimer les colonnes sans nom (None, "", "  ")
+        fieldnames = [col for col in raw_fieldnames if col and col.strip()]
 
-        if not severity_col:
-            print("⚠️  Colonne 'Severity' introuvable. Colonnes disponibles :", fieldnames)
-            sys.exit(1)
+        rows = []
+        for row in reader:
+            # Nettoyer chaque ligne : garder uniquement les clés valides
+            clean_row = {k: v for k, v in row.items() if k and k.strip()}
+            rows.append(clean_row)
 
-        rows = list(reader)
+    # Détection automatique de la colonne Severity
+    severity_col = next(
+        (col for col in fieldnames if "severity" in col.lower()), None
+    )
+    if not severity_col:
+        print("⚠️  Colonne Severity introuvable. Colonnes disponibles :", fieldnames)
+        sys.exit(1)
 
-    # Tri par sévérité décroissante, puis par VulnerabilityID pour l'ordre alphabétique
+    # Détection automatique de la colonne VulnerabilityID
     vuln_col = next(
-        (col for col in fieldnames if "vulnerabilityid" in col.lower() or "id" in col.lower()),
+        (col for col in fieldnames
+         if "vulnerabilityid" in col.lower() or col.lower() == "id"),
         None
     )
 
+    # Tri décroissant par sévérité, puis par ID pour les ex-aequo
     rows.sort(key=lambda r: (
-        SEVERITY_ORDER.get(r[severity_col].strip().upper(), 99),
+        SEVERITY_ORDER.get(r.get(severity_col, "").strip().upper(), 99),
         r.get(vuln_col, "") if vuln_col else ""
     ))
 
     with open(output_file, "w", newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(
+            f,
+            fieldnames=fieldnames,
+            extrasaction='ignore'
+        )
         writer.writeheader()
         writer.writerows(rows)
 
     # Résumé dans les logs Jenkins
-    from collections import Counter
-    counts = Counter(r[severity_col].strip().upper() for r in rows)
+    counts = Counter(r.get(severity_col, "").strip().upper() for r in rows)
     print("\\n===== Résumé des vulnérabilités =====")
     for level in ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"]:
         if counts.get(level, 0) > 0:
             print(f"  {level:<10}: {counts[level]}")
     print(f"  {'TOTAL':<10}: {sum(counts.values())}")
     print("=====================================\\n")
-    print(f"✅ Rapport trié sauvegardé dans : {output_file}")
+    print(f"✅ Rapport trié sauvegardé : {output_file}")
 
 except FileNotFoundError:
     print(f"❌ Fichier introuvable : {input_file}")
@@ -130,6 +139,7 @@ EOF
         always {
             sh '''
             docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true
+            docker rmi ${IMAGE_NAME}:latest || true
             '''
         }
     }
