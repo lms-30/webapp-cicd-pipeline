@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         IMAGE_NAME = "mon-app"
-        IMAGE_TAG = "build-${BUILD_NUMBER}"
+        IMAGE_TAG  = "build-${BUILD_NUMBER}"
     }
     stages {
         stage('Checkout') {
@@ -126,6 +126,27 @@ EOF
             steps {
                 echo '📊 Archivage du rapport Trivy trié...'
                 archiveArtifacts artifacts: 'reports/trivy-report.csv', fingerprint: true
+            }
+        }
+        stage('Export Report to Host') {
+            steps {
+                echo '💾 Export du rapport vers le dossier partagé hôte...'
+                sh '''
+                SHARED_DIR="/var/jenkins_home/exports"
+                mkdir -p $SHARED_DIR
+
+                TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+                EXPORT_NAME="trivy-report_${TIMESTAMP}_build-${BUILD_NUMBER}.csv"
+
+                cp reports/trivy-report.csv $SHARED_DIR/$EXPORT_NAME
+
+                echo ""
+                echo "✅ Rapport exporté avec succès !"
+                echo "   📄 Fichier  : $SHARED_DIR/$EXPORT_NAME"
+                echo "   📦 Taille   : $(du -h $SHARED_DIR/$EXPORT_NAME | cut -f1)"
+                echo "   🗂️  Historique des exports :"
+                ls -lht $SHARED_DIR/
+                '''
             }
         }
     }
