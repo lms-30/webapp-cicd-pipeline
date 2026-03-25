@@ -12,7 +12,9 @@ services:
       - PYTHONUNBUFFERED=1
       - PORT=8080
     volumes:
-      - ./reports:/app/reports     # ← persiste les rapports Trivy
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jenkins_home:/var/jenkins_home
+      - ./trivy-reports:/var/jenkins_home/exports
     networks:
       - app-network
     healthcheck:
